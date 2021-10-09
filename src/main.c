@@ -15,6 +15,8 @@
 #include "LED.h"
 #include "WiFi.h"
 #include "index_page_html.h"
+#include "bulb_OFF_jpg.h"
+#include "bulb_ON_jpg.h"
 
 enum Control_Vars
 {
@@ -28,14 +30,9 @@ extern unsigned int gLED_BUILTIN_PERIOD;
 
 esp_err_t index_uri_handler(httpd_req_t *req)
 {
-    printf("Content length: ");
-    printf("%d \n", req->content_len);
-
-    printf("Method: ");
-    printf("%d \n", req->method);
-
-    printf("URI: ");
-    printf("%s \n", req->uri);
+    printf("\nStatus_handler:\n");
+    printf("Content length: %d \n", req->content_len);
+    printf("URI: %s \n", req->uri);
 
     int buf_len = sizeof(index_page_html);
     printf("Buffer length: %d \n", buf_len);
@@ -120,15 +117,8 @@ esp_err_t control_uri_handler(httpd_req_t *req)
 esp_err_t status_uri_handler(httpd_req_t *req)
 {
     printf("\nStatus_handler:\n");
-
-    printf("Content length: ");
-    printf("%d \n", req->content_len);
-
-    printf("Method: ");
-    printf("%d \n", req->method);
-
-    printf("URI: ");
-    printf("%s \n", req->uri);
+    printf("Content length: %d \n", req->content_len);
+    printf("URI: %s \n", req->uri);
 
     char LED_STATE[4] = "";
     itoa(gLED_BUILTIN_STATE, LED_STATE, 10);
@@ -142,6 +132,50 @@ esp_err_t status_uri_handler(httpd_req_t *req)
 
     return ESP_OK;
 }
+
+esp_err_t img_bulbON_uri_handler(httpd_req_t *req)
+{
+    printf("\nimg_bulbON_uri_handler: \n");
+
+    printf("URI: %s \n", req->uri);
+
+    int buf_len = sizeof(bulb_ON_img);
+    printf("Buffer length: %d \n", buf_len);
+
+    httpd_resp_set_type(req, "image/png");
+    // httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+    httpd_resp_send(req, bulb_ON_img, buf_len);
+
+    return ESP_OK;
+}
+
+esp_err_t img_bulbOFF_uri_handler(httpd_req_t *req)
+{
+    printf("\nimg_bulbOFF_uri_handler: \n");
+
+    printf("URI: %s \n", req->uri);
+
+    int buf_len = sizeof(bulb_OFF_img);
+    printf("Buffer length: %d \n", buf_len);
+
+    httpd_resp_set_type(req, "image/png");
+    // httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+    httpd_resp_send(req, bulb_OFF_img, buf_len);
+
+    return ESP_OK;
+}
+
+httpd_uri_t img_uri_bulb_ON = {
+    .method = HTTP_GET,
+    .uri = "/img/bulb-ON.jpg",
+    .handler = &img_bulbON_uri_handler,
+    .user_ctx = NULL};
+
+httpd_uri_t img_uri_bulb_OFF = {
+    .method = HTTP_GET,
+    .uri = "/img/bulb-OFF.jpg",
+    .handler = &img_bulbOFF_uri_handler,
+    .user_ctx = NULL};
 
 httpd_uri_t control_uri_get = {
     .method = HTTP_GET,
@@ -171,7 +205,7 @@ httpd_handle_t start_webserver()
 {
     // Default configuration
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
+    config.max_resp_headers = 20; // Testing
     // Empty handle for the HTTP server
     httpd_handle_t server = NULL;
 
@@ -182,6 +216,8 @@ httpd_handle_t start_webserver()
         httpd_register_uri_handler(server, &index_uri);
         httpd_register_uri_handler(server, &status_uri_get);
         httpd_register_uri_handler(server, &control_uri_get);
+        httpd_register_uri_handler(server, &img_uri_bulb_ON);
+        httpd_register_uri_handler(server, &img_uri_bulb_OFF);
     }
 
     return server;
