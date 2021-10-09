@@ -3,7 +3,7 @@
 
 #include "LED.h"
 
-#define LED_BLINK_TASK_STACK_SIZE 1000
+#define LED_BLINK_TASK_STACK_SIZE 500
 
 void io_init()
 {
